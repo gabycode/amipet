@@ -12,7 +12,13 @@ class AmiPetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AmiPet',
-      theme: ThemeData(primarySwatch: Colors.teal),
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        fontFamily: 'Agrandir',
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
       home: const HomePage(),
     );
   }
