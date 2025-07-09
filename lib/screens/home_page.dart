@@ -30,48 +30,59 @@ class HomePage extends StatelessWidget {
             children: [
               const SizedBox(height: 20),
 
-              
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: const [
-                      ResponsivePetAlign(
-                        alignment: Alignment.centerLeft,
-                        nombre: 'Misu',
-                        image: 'assets/misu.jpg',
-                        color: Color(0xFFF9C0AB),
-                      ),
-                      SizedBox(height: 40),
-                      ResponsivePetAlign(
-                        alignment: Alignment.centerRight,
-                        nombre: 'Coco',
-                        image: 'assets/coco.jpg',
-                        color: Color(0xFFA8CD89),
-                      ),
-                      SizedBox(height: 40),
-                      ResponsivePetAlign(
-                        alignment: Alignment.centerLeft,
-                        nombre: 'Luna',
-                        image: 'assets/luna.jpg',
-                        color: Color(0xFFF4E0AF),
-                      ),
-                      SizedBox(height: 40),
-                      ResponsivePetAlign(
-                        alignment: Alignment.centerRight,
-                        nombre: 'Max',
-                        image: 'assets/max.jpg',
-                        color: Color(0xFF355F2E),
-                      ),
-                    ],
-                  );
-                },
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 5,
+                mainAxisSpacing: 5,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: const [
+                  PetCard(
+                    nombre: 'Misu',
+                    image: 'assets/misu.jpg',
+                    color: Color(0xFFF9C0AB),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: PetCard(
+                      nombre: 'Coco',
+                      image: 'assets/coco.jpg',
+                      color: Color(0xFFA8CD89),
+                    ),
+                  ),
+
+                  PetCard(
+                    nombre: 'Luna',
+                    image: 'assets/luna.jpg',
+                    color: Color(0xFFF4E0AF),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: PetCard(
+                      nombre: 'Max',
+                      image: 'assets/max.jpg',
+                      color: Color(0xFF355F2E),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 30),
-              Text("Encuentra a tu", style: titleStyle, textAlign: TextAlign.center),
-              Text("animal favorito", style: subtitleStyle, textAlign: TextAlign.center),
-              Text("cerca de ti", style: titleStyle, textAlign: TextAlign.center),
+              Text(
+                "Encuentra a tu",
+                style: titleStyle,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "animal favorito",
+                style: subtitleStyle,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "cerca de ti",
+                style: titleStyle,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +100,9 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ExplorarMascotasPage()),
+                    MaterialPageRoute(
+                      builder: (_) => const ExplorarMascotasPage(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -128,7 +141,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-
 class ResponsivePetAlign extends StatelessWidget {
   final Alignment alignment;
   final String nombre;
@@ -149,17 +161,15 @@ class ResponsivePetAlign extends StatelessWidget {
     const maxContentWidth = 350.0;
 
     final horizontalPadding =
-        screenWidth > maxContentWidth ? (screenWidth - maxContentWidth) / 2 : 20.0;
+        screenWidth > maxContentWidth
+            ? (screenWidth - maxContentWidth) / 2
+            : 20.0;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Align(
         alignment: alignment,
-        child: PetCard(
-          nombre: nombre,
-          image: image,
-          color: color,
-        ),
+        child: PetCard(nombre: nombre, image: image, color: color),
       ),
     );
   }
@@ -179,8 +189,8 @@ class PetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double boxSize = 120;
-    const double imageSize = 85; 
+    const double boxSize = 160;
+    const double imageSize = 120;
 
     return Column(
       children: [
@@ -210,10 +220,7 @@ class PetCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          nombre,
-          style: const TextStyle(color: Color(0xFF355F2E)),
-        ),
+        Text(nombre, style: const TextStyle(color: Color(0xFF355F2E))),
       ],
     );
   }
