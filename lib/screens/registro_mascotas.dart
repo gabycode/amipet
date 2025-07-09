@@ -34,7 +34,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
         _formKey.currentState!.reset();
       });
 
-      // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('🐾 Mascota registrada exitosamente')),
       );
@@ -122,7 +121,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Campo Nombre
                       _buildTextField(
                         controller: _nombreController,
                         label: 'Nombre',
@@ -135,8 +133,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
 
-                      // Campo Especie
                       _buildTextField(
                         controller: _especieController,
                         label: 'Especie',
@@ -149,8 +147,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
 
-                      // Campo Edad
                       _buildTextField(
                         controller: _edadController,
                         label: 'Edad',
@@ -162,8 +160,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                           LengthLimitingTextInputFormatter(2),
                         ],
                       ),
+                      const SizedBox(height: 16),
 
-                      // Campo Descripción
                       _buildTextField(
                         controller: _descripcionController,
                         label: 'Descripción',
@@ -171,6 +169,7 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                         color: campoColor,
                         validator: _validarDescripcion,
                       ),
+                      const SizedBox(height: 20),
 
                       SizedBox(
                         width: double.infinity,
@@ -270,7 +269,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
     );
   }
 
-  // Validaciones de los campos del formulario
   String? _validarSoloLetras(String? value, String campo) {
     if (value == null || value.trim().isEmpty) {
       return 'El campo $campo es obligatorio';

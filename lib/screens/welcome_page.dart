@@ -13,7 +13,10 @@ class BienvenidaScreen extends StatelessWidget {
         showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoritos'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favoritos',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Adoptar'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
@@ -23,20 +26,24 @@ class BienvenidaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('¡Hola Lina!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF355f2e),
-                  fontFamily: 'Sans',
-                )),
+            Text(
+              '¡Hola Zuhaila!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF355f2e),
+                fontFamily: 'Sans',
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('Bienvenida',
-                style: TextStyle(
-                  fontSize: 22,
-                  color: Colors.black87,
-                  fontFamily: 'Sans',
-                )),
+            Text(
+              'Bienvenida',
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.black87,
+                fontFamily: 'Sans',
+              ),
+            ),
             const SizedBox(height: 40),
             Center(
               child: Column(

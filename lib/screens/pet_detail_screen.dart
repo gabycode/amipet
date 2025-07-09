@@ -38,7 +38,7 @@ class PetDetailScreen extends StatelessWidget {
             child: CircleAvatar(
               radius: 100,
               backgroundImage: AssetImage(
-                'assets/coco.jpeg',
+                'assets/coco.jpg',
               ), // Asegúrate de tener esta imagen
             ),
           ),

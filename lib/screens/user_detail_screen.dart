@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_page.dart';
 
 class UserDetailScreen extends StatelessWidget {
   const UserDetailScreen({super.key});
@@ -30,16 +31,27 @@ class UserDetailScreen extends StatelessWidget {
                   color: Color(0xff355f2e),
                 ),
               ),
-              const Icon(Icons.person, size: 28, color: Color(0xff355f2e)),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
+                    (Route<dynamic> route) => false,
+                  );
+                },
+                child: const Icon(
+                  Icons.logout,
+                  size: 28,
+                  color: Color(0xff355f2e),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           const Center(
             child: CircleAvatar(
               radius: 100,
-              backgroundImage: AssetImage(
-                'assets/user_avatar.png', // Coloca una imagen de usuario
-              ),
+              backgroundImage: AssetImage('assets/user_avatar.png'),
             ),
           ),
           const SizedBox(height: 16),

@@ -68,7 +68,30 @@ class InicioPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Image.asset('assets/images/pet_banner.png', height: 80), // Asegúrate de tener esta imagen
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/pet_banner.jpg',
+                        height: 80,
+                        width: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: verdeOscuro,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.pets,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -87,10 +110,10 @@ class InicioPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  categoriaItem('assets/icons/dog.png', 'Perros'),
-                  categoriaItem('assets/icons/cat.png', 'Gatos'),
-                  categoriaItem('assets/icons/rabbit.png', 'Conejos'),
-                  categoriaItem('assets/icons/bird.png', 'Aves'),
+                  categoriaItem(Icons.pets, 'Perros'),
+                  categoriaItem(Icons.pets, 'Gatos'),
+                  categoriaItem(Icons.cruelty_free, 'Conejos'),
+                  categoriaItem(Icons.flutter_dash, 'Aves'),
                 ],
               ),
 
@@ -121,7 +144,9 @@ class InicioPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: verdeOscuro,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 14),
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -143,7 +168,7 @@ class InicioPage extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -151,24 +176,20 @@ class InicioPage extends StatelessWidget {
     );
   }
 
-  Widget categoriaItem(String iconPath, String label) {
+  Widget categoriaItem(IconData icon, String label) {
     return Column(
       children: [
         Container(
           width: 60,
           height: 60,
-          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: verdeClaro,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Image.asset(iconPath, fit: BoxFit.contain),
+          child: Icon(icon, color: verdeOscuro, size: 30),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 12),
-        ),
+        Text(label, style: GoogleFonts.poppins(fontSize: 12)),
       ],
     );
   }
@@ -180,12 +201,7 @@ class InicioPage extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle, color: Colors.green, size: 20),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.poppins(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: GoogleFonts.poppins(fontSize: 14))),
         ],
       ),
     );
