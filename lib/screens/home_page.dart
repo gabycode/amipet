@@ -1,6 +1,9 @@
+import 'package:amipet/screens/registro_mascotas.dart';
+import 'package:amipet/screens/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'mascotas_page.dart';
+import 'pet_detail_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -22,121 +25,91 @@ class HomePage extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FFE8),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(screenWidth * 0.05),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 5,
-                mainAxisSpacing: 5,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  PetCard(
-                    nombre: 'Misu',
-                    image: 'assets/misu.jpg',
-                    color: Color(0xFFF9C0AB),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: PetCard(
-                      nombre: 'Coco',
-                      image: 'assets/coco.jpg',
-                      color: Color(0xFFA8CD89),
-                    ),
-                  ),
-
-                  PetCard(
-                    nombre: 'Luna',
-                    image: 'assets/luna.jpg',
-                    color: Color(0xFFF4E0AF),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: PetCard(
-                      nombre: 'Max',
-                      image: 'assets/max.jpg',
-                      color: Color(0xFF355F2E),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-              Text(
-                "Encuentra a tu",
-                style: titleStyle,
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                "animal favorito",
-                style: subtitleStyle,
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                "cerca de ti",
-                style: titleStyle,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.location_on_outlined, color: Colors.green),
-                  SizedBox(width: 5),
-                  Text(
-                    "Mascotas disponibles en tu área",
-                    style: TextStyle(color: Colors.green),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ExplorarMascotasPage(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF355F2E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.15,
-                    vertical: 15,
-                  ),
-                ),
-                child: const Text(
-                  "Explorar mascotas",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Color(0xFFF4FFE8), // verde claro
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: const [
-                  InfoItem(texto: '150+', subtexto: 'Mascotas'),
-                  InfoItem(texto: '98%', subtexto: 'Adopciones exitosas'),
-                  InfoItem(texto: '24h', subtexto: 'Respuestas'),
-                ],
-              ),
-            ],
+  backgroundColor: const Color(0xFFF4FFE8),
+  appBar: AppBar(title: const Text('AmiPet'), centerTitle: true), 
+  body: SafeArea(
+    child: SingleChildScrollView(
+      padding: EdgeInsets.all(screenWidth * 0.05),
+      child: Column(
+        children: [
+          GridView.count(
+            crossAxisCount: 2,
+            ...
           ),
-        ),
+
+          const SizedBox(height: 30),
+          Text(...),
+          ...
+
+          const SizedBox(height: 16),
+          ElevatedButton(
+            child: const Text('Datos de Mascotas'),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PetDetailScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            child: const Text('Registrar Mascotas'),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RegistroMascotaScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            child: const Text('Datos de Usuario'),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserDetailScreen()),
+              );
+            },
+          ),
+        ],
       ),
+    ),
+  ),
+
+      ),
+      const SizedBox(height: 16), // Espacio entre botones
+      ElevatedButton(
+        child: const Text('Datos de Mascotas'),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PetDetailScreen()),
+          );
+        },
+      ),
+      const SizedBox(height: 16), // Espacio entre botones
+      ElevatedButton(
+        child: const Text('Registrar Mascotas'),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RegistroMascotaScreen()),
+          );
+        },
+      ),
+      const SizedBox(height: 16), // Espacio entre botones
+      ElevatedButton(
+        child: const Text('Datos de Usuario'),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserDetailScreen()),
+          );
+        },
+      ),
+    ],
+  ),
+),
     );
   }
 }
