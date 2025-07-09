@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PetDetailScreen extends StatelessWidget {
-  const PetDetailScreen({super.key});
+class UserDetailScreen extends StatelessWidget {
+  const UserDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,29 +23,29 @@ class PetDetailScreen extends StatelessWidget {
                 ),
               ),
               const Text(
-                'Detalles',
+                'Perfil',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xff355f2e),
                 ),
               ),
-              const Icon(Icons.pets, size: 28, color: Color(0xff355f2e)),
+              const Icon(Icons.person, size: 28, color: Color(0xff355f2e)),
             ],
           ),
           const SizedBox(height: 24),
-          Center(
+          const Center(
             child: CircleAvatar(
               radius: 100,
               backgroundImage: AssetImage(
-                'assets/coco.jpeg',
-              ), // Asegúrate de tener esta imagen
+                'assets/user_avatar.png', // Coloca una imagen de usuario
+              ),
             ),
           ),
           const SizedBox(height: 16),
           const Center(
             child: Text(
-              'Coco',
+              'Zuhaila Liscano',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -64,7 +64,7 @@ class PetDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'Perro mariposa',
+                  'Desarrolladora de apps móviles',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class PetDetailScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'Coco es un perrito de raza Papillón, pequeño, lleno de energía y con un corazón enorme. Tiene unos ojos vivaces y curiosos, y sus orejitas en forma de mariposa lo hacen simplemente adorable. Con su pelaje blanco y manchas color canela, Coco no solo es hermoso, sino también muy inteligente y cariñoso.',
+                  'Zuhaila es una estudiante apasionada por la tecnología, especializada en desarrollo multiplataforma. Le encanta crear interfaces amigables, resolver problemas técnicos y seguir aprendiendo cada día.',
                   style: TextStyle(
                     fontSize: 16,
                     color: Color(0xFF6F4C45),
@@ -85,19 +85,19 @@ class PetDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconInfo(
-                      icon: Icons.fastfood,
-                      label: 'Comida',
-                      value: 'Purina',
+                      icon: Icons.email,
+                      label: 'Correo',
+                      value: 'zuhaila@email.com',
                     ),
                     IconInfo(
-                      icon: Icons.female,
-                      label: 'Género',
-                      value: 'Hembra',
+                      icon: Icons.phone,
+                      label: 'Teléfono',
+                      value: '809-123-4567',
                     ),
                     IconInfo(
-                      icon: Icons.calendar_today,
-                      label: 'Edad',
-                      value: '9 meses',
+                      icon: Icons.badge,
+                      label: 'Rol',
+                      value: 'Estudiante',
                     ),
                   ],
                 ),

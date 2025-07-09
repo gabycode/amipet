@@ -1,4 +1,5 @@
 import 'package:amipet/screens/registro_mascotas.dart';
+import 'package:amipet/screens/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'mascotas_page.dart';
 import 'pet_detail_screen.dart';
@@ -40,6 +41,16 @@ class HomePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const RegistroMascotaScreen()),
+          );
+        },
+      ),
+      const SizedBox(height: 16), // Espacio entre botones
+      ElevatedButton(
+        child: const Text('Datos de Usuario'),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserDetailScreen()),
           );
         },
       ),
