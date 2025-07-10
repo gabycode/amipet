@@ -89,7 +89,7 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MascotasPage()),
+                    MaterialPageRoute(builder: (_) => const ExplorarMascotasPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
