@@ -16,6 +16,7 @@ Aplicación Flutter que muestra mascotas disponibles para adopción utilizando l
 ### 1. Clona el repositorio y ve a la carpeta del backend:
 
 ```bash
+git clone https://github.com/gabycode/amipet.git
 cd petfinder-backend
 ```
 
