@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'mascotas_page.dart';
 
 class InicioPage extends StatelessWidget {
-  const InicioPage({super.key});
+  final VoidCallback? onNavigateToExplorer;
+
+  const InicioPage({super.key, this.onNavigateToExplorer});
 
   final Color verdeOscuro = const Color(0xFF355f2e);
   final Color verdeClaro = const Color(0xFFa8cd89);
@@ -12,164 +14,173 @@ class InicioPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '¡Bienvenid@!',
-                style: GoogleFonts.poppins(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: verdeOscuro,
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevenir navegación hacia atrás que cause problemas de sesión
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Bienvenid@!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: verdeOscuro,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Encuentra a tu nuevo mejor amigo hoy',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[700],
+                const SizedBox(height: 8),
+                Text(
+                  'Encuentra a tu nuevo mejor amigo hoy',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Banner
-              Container(
-                decoration: BoxDecoration(
-                  color: amarillo,
-                  borderRadius: BorderRadius.circular(16),
+                // Banner
+                Container(
+                  decoration: BoxDecoration(
+                    color: amarillo,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Adopta con el corazón',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: verdeOscuro,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Dale una segunda oportunidad a un animalito que lo necesita.',
+                              style: GoogleFonts.poppins(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/pet_banner.jpg',
+                          height: 80,
+                          width: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 80,
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: verdeOscuro,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.pets,
+                                color: Colors.white,
+                                size: 40,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                padding: const EdgeInsets.all(20),
-                child: Row(
+
+                const SizedBox(height: 32),
+
+                // Categorías
+                Text(
+                  'Categorías',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Adopta con el corazón',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: verdeOscuro,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Dale una segunda oportunidad a un animalito que lo necesita.',
-                            style: GoogleFonts.poppins(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        'assets/pet_banner.jpg',
-                        height: 80,
-                        width: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 80,
-                            width: 80,
-                            decoration: BoxDecoration(
-                              color: verdeOscuro,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.pets,
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                    categoriaItem(Icons.pets, 'Perros'),
+                    categoriaItem(Icons.pets, 'Gatos'),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Categorías
-              Text(
-                'Categorías',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  categoriaItem(Icons.pets, 'Perros'),
-                  categoriaItem(Icons.pets, 'Gatos'),
-                  categoriaItem(Icons.cruelty_free, 'Conejos'),
-                  categoriaItem(Icons.flutter_dash, 'Aves'),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Consejos
-              Text(
-                'Consejos para adoptar',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Column(
-                children: [
-                  tipItem('Sé responsable y comprometido.'),
-                  tipItem('Considera el espacio y el tiempo disponible.'),
-                  tipItem('Visita al animal antes de adoptar.'),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Botón de explorar
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: verdeOscuro,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                // Consejos
+                Text(
+                  'Consejos para adoptar',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ExplorarMascotasPage(),
+                ),
+                const SizedBox(height: 12),
+                Column(
+                  children: [
+                    tipItem('Sé responsable y comprometido.'),
+                    tipItem('Considera el espacio y el tiempo disponible.'),
+                    tipItem('Visita al animal antes de adoptar.'),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Botón de explorar
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: verdeOscuro,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
                       ),
-                    );
-                  },
-                  child: Text(
-                    'Explorar mascotas',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (onNavigateToExplorer != null) {
+                        onNavigateToExplorer!();
+                      } else {
+                        // Fallback si no hay callback
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ExplorarMascotasPage(),
+                          ),
+                        );
+                      }
+                    },
+                    child: Text(
+                      'Explorar mascotas',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

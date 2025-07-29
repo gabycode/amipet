@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'mascotas_page.dart';
-import '../providers/mascota_provider.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -24,33 +23,6 @@ class HomePage extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Consumer<MascotaProvider>(
-            builder: (context, provider, child) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.favorite, color: Colors.red, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${provider.cantidadFavoritas}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF355F2E),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       backgroundColor: const Color(0xFFF4FFE8),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -59,28 +31,22 @@ class HomePage extends StatelessWidget {
             children: [
               const SizedBox(height: 20),
 
-              Consumer<MascotaProvider>(
-                builder: (context, provider, child) {
-                  final mascotas = provider.mascotasHome;
-                  return GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 5,
-                          mainAxisSpacing: 5,
-                          childAspectRatio: 0.85,
-                        ),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: mascotas.length,
-                    itemBuilder: (context, index) {
-                      final mascota = mascotas[index];
-                      final isEven = index % 2 == 0;
-                      return Padding(
-                        padding: EdgeInsets.only(top: isEven ? 0 : 20),
-                        child: PetCard(mascota: mascota),
-                      );
-                    },
+              GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  childAspectRatio: 0.85,
+                ),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _getMascotasEjemplo().length,
+                itemBuilder: (context, index) {
+                  final mascota = _getMascotasEjemplo()[index];
+                  final isEven = index % 2 == 0;
+                  return Padding(
+                    padding: EdgeInsets.only(top: isEven ? 0 : 20),
+                    child: PetCard(mascota: mascota),
                   );
                 },
               ),
@@ -114,56 +80,97 @@ class HomePage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ExplorarMascotasPage(),
+              SizedBox(
+                width: screenWidth * 0.8,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF355F2E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF355F2E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.15,
-                    vertical: 15,
+                  child: const Text(
+                    "Iniciar Sesión",
+                    style: TextStyle(fontSize: 18, color: Color(0xFFF4FFE8)),
                   ),
-                ),
-                child: const Text(
-                  "Explorar mascotas",
-                  style: TextStyle(fontSize: 18, color: Color(0xFFF4FFE8)),
                 ),
               ),
 
-              const SizedBox(height: 30),
-              Consumer<MascotaProvider>(
-                builder: (context, provider, child) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      InfoItem(
-                        texto: '${provider.mascotasHome.length}',
-                        subtexto: 'Mascotas disponibles',
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: screenWidth * 0.8,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterScreen(),
                       ),
-                      InfoItem(
-                        texto: '${provider.cantidadFavoritas}',
-                        subtexto: 'Tus favoritas',
-                      ),
-                      const InfoItem(texto: '24h', subtexto: 'Respuestas'),
-                    ],
-                  );
-                },
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF355F2E), width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    "Crear Cuenta",
+                    style: TextStyle(fontSize: 18, color: Color(0xFF355F2E)),
+                  ),
+                ),
               ),
+
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _getMascotasEjemplo() {
+    return [
+      {
+        'name': 'Max',
+        'type': 'Gato',
+        'age': '2 años',
+        'image': 'assets/max.jpg',
+        'color': const Color(0xFFFFB6C1),
+      },
+      {
+        'name': 'Luna',
+        'type': 'Perro',
+        'age': '1 año',
+        'image': 'assets/luna.jpg',
+        'color': const Color(0xFFB0E0E6),
+      },
+      {
+        'name': 'Coco',
+        'type': 'Perro',
+        'age': '3 años',
+        'image': 'assets/coco.jpg',
+        'color': const Color(0xFFFFA07A),
+      },
+      {
+        'name': 'Misu',
+        'type': 'Gato',
+        'age': '2 años',
+        'image': 'assets/misu.jpg',
+        'color': const Color(0xFF98FB98),
+      },
+    ];
   }
 }
 
@@ -178,83 +185,37 @@ class PetCard extends StatelessWidget {
 
     return Column(
       children: [
-        Stack(
-          children: [
-            Container(
-              width: boxSize,
-              height: boxSize,
-              decoration: BoxDecoration(
-                color: mascota['color'] as Color,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+        Container(
+          width: boxSize,
+          height: boxSize,
+          decoration: BoxDecoration(
+            color: mascota['color'] as Color,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, 4),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: ClipOval(
-                  child: Image.asset(
-                    mascota['image'] as String,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.pets,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 5,
-              right: 5,
-              child: Consumer<MascotaProvider>(
-                builder: (context, provider, child) {
-                  final isFavorita = provider.isFavorita(mascota);
-                  return GestureDetector(
-                    onTap: () {
-                      provider.toggleFavorito(mascota);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isFavorita
-                                ? '${mascota['name']} removido de favoritos'
-                                : '${mascota['name']} agregado a favoritos',
-                          ),
-                          duration: const Duration(seconds: 1),
-                          backgroundColor:
-                              isFavorita ? Colors.red : Colors.green,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isFavorita ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorita ? Colors.red : Colors.grey,
-                        size: 18,
-                      ),
-                    ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: ClipOval(
+              child: Image.asset(
+                mascota['image'] as String,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.pets, size: 40, color: Colors.grey),
                   );
                 },
               ),
             ),
-          ],
+          ),
         ),
         const SizedBox(height: 6),
         Text(

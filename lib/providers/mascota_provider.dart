@@ -18,12 +18,33 @@ class MascotaProvider extends ChangeNotifier {
   }
 
   void removerDeFavoritos(Map<String, dynamic> mascota) {
-    _mascotasFavoritas.removeWhere((m) => m['id'] == mascota['id']);
+    _mascotasFavoritas.removeWhere((m) => _sonLaMismaMascota(m, mascota));
     notifyListeners();
   }
 
   bool _esFavorita(Map<String, dynamic> mascota) {
-    return _mascotasFavoritas.any((m) => m['id'] == mascota['id']);
+    return _mascotasFavoritas.any((m) => _sonLaMismaMascota(m, mascota));
+  }
+
+  bool _sonLaMismaMascota(
+    Map<String, dynamic> mascota1,
+    Map<String, dynamic> mascota2,
+  ) {
+    // Comparar por id si ambas lo tienen
+    if (mascota1['id'] != null && mascota2['id'] != null) {
+      return mascota1['id'] == mascota2['id'];
+    }
+
+    // Comparar por nombre si no tienen id
+    final nombre1 = mascota1['nombre'] ?? mascota1['name'];
+    final nombre2 = mascota2['nombre'] ?? mascota2['name'];
+
+    if (nombre1 != null && nombre2 != null) {
+      return nombre1 == nombre2;
+    }
+
+    // Fallback: comparar por referencia
+    return mascota1 == mascota2;
   }
 
   bool isFavorita(Map<String, dynamic> mascota) {
