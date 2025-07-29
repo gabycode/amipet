@@ -98,7 +98,7 @@ class FavoritosPage extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder:
                                         (context) =>
-                                            PetDetailScreen(mascota: mascota),
+                                            PetDetailScreen(mascotaId:mascota['id']),
                                   ),
                                 );
                               },

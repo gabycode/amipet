@@ -262,7 +262,7 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
                                     MaterialPageRoute(
                                       builder:
                                           (context) =>
-                                              PetDetailScreen(mascota: mascota),
+                                              PetDetailScreen(mascotaId:mascota['id']),
                                     ),
                                   );
                                 },
