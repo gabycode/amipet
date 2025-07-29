@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../providers/mascota_provider.dart';
+import '../services/firestore_service.dart';
 
 class RegistroMascotaScreen extends StatefulWidget {
   const RegistroMascotaScreen({super.key});
@@ -12,40 +17,218 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nombreController = TextEditingController();
-  final TextEditingController _especieController = TextEditingController();
   final TextEditingController _edadController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController _fotoURLController = TextEditingController();
+
+  String _generoSeleccionado = 'macho';
+  String _especieSeleccionada = 'Perro';
+  String _unidadEdadSeleccionada = 'años';
+  String _comidaSeleccionada = 'Purina';
+  File? _imagenSeleccionada;
+  final ImagePicker _picker = ImagePicker();
 
   List<Map<String, String>> mascotas = [];
 
-  void _registrarMascota() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        mascotas.add({
-          'nombre': _nombreController.text,
-          'especie': _especieController.text,
-          'edad': _edadController.text,
-          'descripcion': _descripcionController.text,
-        });
-        _nombreController.clear();
-        _especieController.clear();
-        _edadController.clear();
-        _descripcionController.clear();
-        _formKey.currentState!.reset();
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🐾 Mascota registrada exitosamente')),
+  Future<void> _seleccionarImagen() async {
+    try {
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Tomar foto'),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final XFile? imagen = await _picker.pickImage(
+                      source: ImageSource.camera,
+                      maxWidth: 800,
+                      maxHeight: 600,
+                      imageQuality: 80,
+                    );
+                    if (imagen != null) {
+                      setState(() {
+                        _imagenSeleccionada = File(imagen.path);
+                      });
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Seleccionar de galería'),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final XFile? imagen = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 600,
+                      imageQuality: 80,
+                    );
+                    if (imagen != null) {
+                      setState(() {
+                        _imagenSeleccionada = File(imagen.path);
+                      });
+                    }
+                  },
+                ),
+                if (_imagenSeleccionada != null)
+                  ListTile(
+                    leading: const Icon(Icons.delete),
+                    title: const Text('Quitar imagen'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() {
+                        _imagenSeleccionada = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
+          );
+        },
       );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al seleccionar imagen: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _registrarMascota() async {
+    if (_formKey.currentState!.validate()) {
+      // Validar que se haya seleccionado una imagen
+      if (_imagenSeleccionada == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📸 Debes seleccionar una foto de la mascota'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        // Crear el mapa de datos para Firestore
+        final mascotaData = {
+          'nombre': _nombreController.text.trim(),
+          'especie': _especieSeleccionada,
+          'edad': int.parse(_edadController.text.trim()), // Como número
+          'unidadEdad': _unidadEdadSeleccionada, // Añadir unidad de edad
+          'descripcion': _descripcionController.text.trim(),
+          'comida': _comidaSeleccionada,
+          'fotoURL':
+              _fotoURLController.text.trim().isEmpty
+                  ? 'https://via.placeholder.com/300x200/A8CD89/FFFFFF?text=Sin+Foto'
+                  : _fotoURLController.text.trim(),
+          'genero': _generoSeleccionado,
+        };
+
+        // Guardar en Firestore
+        String? mascotaId = await FirestoreService.registrarMascota(
+          mascotaData,
+        );
+
+        // Cerrar el indicador de carga
+        Navigator.of(context).pop();
+
+        if (mascotaId != null) {
+          // Agregar a la lista local para mostrar
+          setState(() {
+            mascotas.add({
+              'nombre': _nombreController.text,
+              'especie': _especieSeleccionada,
+              'edad': '${_edadController.text} $_unidadEdadSeleccionada',
+              'descripcion': _descripcionController.text,
+            });
+            _nombreController.clear();
+            _edadController.clear();
+            _descripcionController.clear();
+            _fotoURLController.clear();
+            _especieSeleccionada = 'Perro';
+            _generoSeleccionado = 'macho';
+            _unidadEdadSeleccionada = 'años';
+            _comidaSeleccionada = 'Purina';
+            _imagenSeleccionada = null;
+            _formKey.currentState!.reset();
+          });
+
+          // Opcionalmente agregar a favoritos usando Provider
+          final provider = Provider.of<MascotaProvider>(context, listen: false);
+          final nuevaMascota = {
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'name': mascotaData['nombre'],
+            'type': mascotaData['especie'],
+            'age': '${mascotaData['edad']} años',
+            'image': 'assets/pet_banner.jpg',
+            'color': const Color(0xFFA8CD89),
+          };
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '🐾 ${mascotaData['nombre']} registrada exitosamente',
+              ),
+              backgroundColor: const Color(0xFF355F2E),
+              action: SnackBarAction(
+                label: 'Agregar a favoritos',
+                textColor: Colors.white,
+                onPressed: () {
+                  provider.agregarAFavoritos(nuevaMascota);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '❤️ ${mascotaData['nombre']} agregada a favoritos',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+
+          // Regresar true para indicar que se registró exitosamente
+          Navigator.of(context).pop(true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '❌ Error al registrar la mascota. Intenta de nuevo.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Cerrar el indicador de carga si hay error
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   @override
   void dispose() {
     _nombreController.dispose();
-    _especieController.dispose();
     _edadController.dispose();
     _descripcionController.dispose();
+    _fotoURLController.dispose();
     super.dispose();
   }
 
@@ -135,29 +318,143 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _especieController,
-                        label: 'Especie',
-                        color: campoColor,
-                        validator:
-                            (value) => _validarSoloLetras(value, 'especie'),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'),
+                      // Fila con Especie y Género
+                      Row(
+                        children: [
+                          // Dropdown de Especie
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: campoColor,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _especieSeleccionada,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  hintText: 'Especie',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Perro',
+                                    child: Text('Perro'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Gato',
+                                    child: Text('Gato'),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _especieSeleccionada = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Dropdown de Género
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: campoColor,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _generoSeleccionado,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  hintText: 'Género',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'macho',
+                                    child: Text('Macho'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'hembra',
+                                    child: Text('Hembra'),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _generoSeleccionado = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
 
-                      _buildTextField(
-                        controller: _edadController,
-                        label: 'Edad',
-                        keyboardType: TextInputType.number,
-                        color: campoColor,
-                        validator: _validarEdad,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(2),
+                      // Fila con Edad y Unidad
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: _buildTextField(
+                              controller: _edadController,
+                              label: 'Edad',
+                              keyboardType: TextInputType.number,
+                              color: campoColor,
+                              validator: _validarEdad,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(2),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: campoColor,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _unidadEdadSeleccionada,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  hintText: 'Unidad',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'años',
+                                    child: Text('Años'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'meses',
+                                    child: Text('Meses'),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _unidadEdadSeleccionada = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -168,6 +465,145 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                         maxLines: 3,
                         color: campoColor,
                         validator: _validarDescripcion,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Dropdown de Comida
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: campoColor,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: _comidaSeleccionada,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                            hintText: 'Tipo de comida',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Purina',
+                              child: Text('Purina'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Royal Canin',
+                              child: Text('Royal Canin'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Hills',
+                              child: Text('Hills'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Pedigree',
+                              child: Text('Pedigree'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Whiskas',
+                              child: Text('Whiskas'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Eukanuba',
+                              child: Text('Eukanuba'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Pro Plan',
+                              child: Text('Pro Plan'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Comida casera',
+                              child: Text('Comida casera'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Otra marca',
+                              child: Text('Otra marca'),
+                            ),
+                          ],
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _comidaSeleccionada = newValue!;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Selector de foto
+                      GestureDetector(
+                        onTap: _seleccionarImagen,
+                        child: Container(
+                          width: double.infinity,
+                          height: _imagenSeleccionada != null ? 200 : 120,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: campoColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color:
+                                  _imagenSeleccionada == null
+                                      ? Colors.red.shade300
+                                      : Colors.grey.shade300,
+                              width: _imagenSeleccionada == null ? 2 : 1,
+                            ),
+                          ),
+                          child:
+                              _imagenSeleccionada != null
+                                  ? Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(
+                                          _imagenSeleccionada!,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _imagenSeleccionada = null;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_a_photo,
+                                        size: 48,
+                                        color: Colors.grey[600],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Toca para seleccionar una foto del dispositivo',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                        ),
                       ),
                       const SizedBox(height: 20),
 
@@ -220,19 +656,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: botonVerde,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Adoptar'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-        ],
       ),
     );
   }

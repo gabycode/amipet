@@ -1,27 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/mascota_provider.dart';
-import 'home_page.dart';
+import 'inicio_page.dart';
 import 'favoritos_page.dart';
-import 'perfil_page.dart';
+import 'user_detail_screen.dart';
 import 'mascotas_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
-  const MainNavigationPage({super.key});
+  final int initialIndex;
+
+  const MainNavigationPage({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavigationPage> createState() => _MainNavigationPageState();
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ExplorarMascotasPage(),
-    const FavoritosPage(),
-    const PerfilPage(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+
+    _pages = [
+      InicioPage(
+        onNavigateToExplorer: () {
+          setState(() {
+            _currentIndex = 1; // Cambiar a la pestaña de Explorar
+          });
+        },
+      ),
+      const ExplorarMascotasPage(),
+      const FavoritosPage(),
+      const UserDetailScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

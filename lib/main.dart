@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/mascota_provider.dart';
 import 'screens/home_page.dart';
 import 'screens/favoritos_page.dart';
 import 'screens/perfil_page.dart';
 import 'screens/mascotas_page.dart';
 import 'screens/usuario_config_page.dart';
+import 'screens/main_navigation_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const AmiPetApp());
 }
 
@@ -29,6 +34,7 @@ class AmiPetApp extends StatelessWidget {
         ),
         home: const HomePage(),
         routes: {
+          '/main': (context) => const MainNavigationPage(),
           '/home': (context) => const HomePage(),
           '/favoritos': (context) => const FavoritosPage(),
           '/perfil': (context) => const PerfilPage(),

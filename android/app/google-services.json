@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "701033692341",
+    "project_id": "amipet-c9144",
+    "storage_bucket": "amipet-c9144.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701033692341:android:52814f28a79809bf1ed2fc",
+        "android_client_info": {
+          "package_name": "com.example.amipet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "701033692341-pdrgr326gr2qphe4i90ckj8u7phkk3fm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.amipet",
+            "certificate_hash": "68ce5753b8211ec596e08692a325bcbed51d5830"
+          }
+        },
+        {
+          "client_id": "701033692341-dj1ndjgpe90nj13rgmj59ehi0ntfqmkq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtIMJ6yrtJz7AKIIxu97nV5yZYaPqsMVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "701033692341-dj1ndjgpe90nj13rgmj59ehi0ntfqmkq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "701033692341-6rdhlo1f5v0bjfdvqdr2u13tp327j43g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.amipet"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
