@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -46,32 +47,32 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD-w0ls446vs5Ja3d7Itgk_sycbAweKCCA',
-    appId: '1:701033692341:web:9556b9f8584f85671ed2fc',
-    messagingSenderId: '701033692341',
-    projectId: 'amipet-c9144',
-    authDomain: 'amipet-c9144.firebaseapp.com',
-    storageBucket: 'amipet-c9144.firebasestorage.app',
-    measurementId: 'G-QDYKDB4LDR',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_WEB_API_KEY']!,
+    appId: dotenv.env['FIREBASE_WEB_APP_ID']!,
+    messagingSenderId: dotenv.env['FIREBASE_WEB_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
+    measurementId: dotenv.env['FIREBASE_WEB_MEASUREMENT_ID']!,
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBtIMJ6yrtJz7AKIIxu97nV5yZYaPqsMVU',
-    appId: '1:701033692341:android:52814f28a79809bf1ed2fc',
-    messagingSenderId: '701033692341',
-    projectId: 'amipet-c9144',
-    storageBucket: 'amipet-c9144.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY']!,
+    appId: dotenv.env['FIREBASE_ANDROID_APP_ID']!,
+    messagingSenderId: dotenv.env['FIREBASE_WEB_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCYLu-rmEDRqjq00ITDLkfhYdI0H657KJ0',
-    appId: '1:701033692341:ios:5d0ef563458b9d541ed2fc',
-    messagingSenderId: '701033692341',
-    projectId: 'amipet-c9144',
-    storageBucket: 'amipet-c9144.firebasestorage.app',
-    androidClientId: '701033692341-pdrgr326gr2qphe4i90ckj8u7phkk3fm.apps.googleusercontent.com',
-    iosClientId: '701033692341-6rdhlo1f5v0bjfdvqdr2u13tp327j43g.apps.googleusercontent.com',
-    iosBundleId: 'com.example.amipet',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_IOS_API_KEY']!,
+    appId: dotenv.env['FIREBASE_IOS_APP_ID']!,
+    messagingSenderId: dotenv.env['FIREBASE_WEB_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
+    androidClientId: dotenv.env['FIREBASE_ANDROID_CLIENT_ID']!,
+    iosClientId: dotenv.env['FIREBASE_IOS_CLIENT_ID']!,
+    iosBundleId: dotenv.env['FIREBASE_IOS_BUNDLE_ID']!,
   );
 }
