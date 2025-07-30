@@ -207,16 +207,6 @@ class _MascotasRegistradasScreenState extends State<MascotasRegistradasScreen> {
                 itemBuilder:
                     (context) => [
                       const PopupMenuItem(
-                        value: 'editar',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Editar'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
                         value: 'eliminar',
                         child: Row(
                           children: [
