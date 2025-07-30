@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
 import '../providers/mascota_provider.dart';
 import 'package:amipet/screens/registro_mascotas.dart';
 import 'pet_detail_screen.dart';
@@ -17,12 +18,11 @@ class ExplorarMascotasPage extends StatefulWidget {
 
 class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
   List<Map<String, dynamic>> mascotas = [];
-  List<Map<String, dynamic>> todasLasMascotas =
-      []; // Lista completa para filtrar
+  List<Map<String, dynamic>> todasLasMascotas = [];
   bool loading = true;
   String error = '';
   int selectedTab = 0;
-  String userName = 'Usuario'; // Nombre por defecto
+  String userName = 'Usuario';
 
   final verdeOscuro = const Color(0xFF355f2e);
   final verdeClaro = const Color(0xFFa8cd89);
@@ -44,12 +44,19 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
     _obtenerNombreUsuario();
     cargarMascotas();
     _scrollController.addListener(_onScroll);
+
+    FormNotifier().addListener(_onMascotaChanged);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    FormNotifier().removeListener(_onMascotaChanged);
     super.dispose();
+  }
+
+  void _onMascotaChanged() {
+    cargarMascotas();
   }
 
   Future<void> cargarMascotas({bool cargarMas = false}) async {
@@ -78,10 +85,9 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      // Cuando esté cerca del final, carga más
       if (!loading && mascotas.length >= _limiteMascotas) {
         setState(() {
-          _limiteMascotas += 20; // Carga 20 más
+          _limiteMascotas += 20;
         });
         cargarMascotas(cargarMas: true);
       }
@@ -91,7 +97,7 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
   void _obtenerNombreUsuario() {
     final userInfo = AuthService.getUserInfo();
     setState(() {
-      userName = userInfo['firstName']!; // Solo el primer nombre
+      userName = userInfo['firstName']!;
     });
   }
 
@@ -102,14 +108,13 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
     });
 
     try {
-      // Obtener todas las mascotas
       final todasMascotas = await FirestoreService.obtenerMascotasDestacadas(
-        limite: 50, // Obtener hasta 50 mascotas
+        limite: 50,
       );
 
       setState(() {
-        todasLasMascotas = todasMascotas; // Guardar la lista completa
-        mascotas = todasMascotas; // Mostrar todas inicialmente
+        todasLasMascotas = todasMascotas;
+        mascotas = todasMascotas;
         loading = false;
       });
     } catch (e) {
@@ -264,7 +269,6 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
                           ],
                         ),
                       ),
-                      // Grid de mascotas en 2 columnas
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: GridView.builder(
@@ -459,10 +463,10 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.fromLTRB(
-                                        8,
-                                        6,
-                                        8,
-                                        4,
+                                        12,
+                                        16,
+                                        12,
+                                        16,
                                       ),
                                       child: Column(
                                         crossAxisAlignment:

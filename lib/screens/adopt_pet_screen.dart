@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
 
 class AdoptPetScreen extends StatefulWidget {
   final Map<String, dynamic> mascota;
@@ -33,13 +34,23 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
     _cargarDatosUsuario();
   }
 
-  void _cargarDatosUsuario() {
+  void _cargarDatosUsuario() async {
     final user = AuthService.currentUser;
     if (user != null) {
       final userInfo = AuthService.getUserInfo();
+
+      final perfilUsuario = await FirestoreService.obtenerPerfilUsuario(
+        user.uid,
+      );
+
       setState(() {
         _nombreController.text = userInfo['name'] ?? '';
         _emailController.text = userInfo['email'] ?? '';
+
+        if (perfilUsuario != null) {
+          _telefonoController.text = perfilUsuario['telefono'] ?? '';
+          _direccionController.text = perfilUsuario['direccion'] ?? '';
+        }
       });
     }
   }
@@ -68,7 +79,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
         return;
       }
 
-      // Mostrar indicador de carga
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -76,7 +86,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
       );
 
       try {
-        // Preparar datos del formulario
         final datosFormulario = {
           'datosPersonales': {
             'nombre': _nombreController.text.trim(),
@@ -89,18 +98,17 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
           'motivacion': _motivoController.text.trim(),
         };
 
-        // Enviar formulario a Firestore
         final formularioId = await FirestoreService.enviarFormularioAdopcion(
           usuarioId: user.uid,
           mascotaId: widget.mascota['id'] ?? 'unknown',
           datosFormulario: datosFormulario,
         );
 
-        // Cerrar indicador de carga
         Navigator.of(context).pop();
 
         if (formularioId != null) {
-          // Mostrar diálogo de éxito
+          FormNotifier().notifyFormSubmitted();
+
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -129,8 +137,8 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
                 actions: [
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Cerrar dialog
-                      Navigator.of(context).pop(); // Volver a detalles
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
                     },
                     child: Text(
                       'Entendido',
@@ -145,7 +153,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
             },
           );
         } else {
-          // Error al enviar
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Error al enviar la solicitud. Intenta de nuevo.'),
@@ -154,7 +161,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
           );
         }
       } catch (e) {
-        // Cerrar indicador de carga si hay error
         Navigator.of(context).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -174,7 +180,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -198,7 +203,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
               ),
             ),
 
-            // Información de la mascota
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(16),
@@ -254,7 +258,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
               ),
             ),
 
-            // Formulario
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -338,7 +341,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Tipo de vivienda
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
@@ -369,7 +371,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Checkboxes
                       CheckboxListTile(
                         title: Text(
                           'Vivienda propia',
@@ -415,7 +416,6 @@ class _AdoptPetScreenState extends State<AdoptPetScreen> {
 
                       const SizedBox(height: 32),
 
-                      // Botón de enviar
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(

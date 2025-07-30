@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'adopt_pet_screen.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
 import '../providers/mascota_provider.dart';
 import 'main_navigation_page.dart';
 
 class PetDetailScreen extends StatefulWidget {
-  final String mascotaId; // Ahora solo recibe el ID
+  final String mascotaId;
 
   const PetDetailScreen({super.key, required this.mascotaId});
 
@@ -19,12 +21,24 @@ class PetDetailScreen extends StatefulWidget {
 class _PetDetailScreenState extends State<PetDetailScreen> {
   bool _yaEnvioFormulario = false;
   bool _verificandoFormulario = true;
-  Map<String, dynamic> mascota = {}; // Aquí almacenaremos los datos de Firebase
+  Map<String, dynamic> mascota = {};
 
   @override
   void initState() {
     super.initState();
     _cargarDatosMascota();
+    _verificarFormularioExistente();
+
+    FormNotifier().addListener(_onFormChanged);
+  }
+
+  @override
+  void dispose() {
+    FormNotifier().removeListener(_onFormChanged);
+    super.dispose();
+  }
+
+  void _onFormChanged() {
     _verificarFormularioExistente();
   }
 
@@ -33,16 +47,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       DocumentSnapshot doc =
           await FirebaseFirestore.instance
               .collection('mascotas')
-              .doc(widget.mascotaId) // corregido aquí
+              .doc(widget.mascotaId)
               .get();
 
       if (doc.exists) {
         setState(() {
           mascota = doc.data() as Map<String, dynamic>;
+          mascota['id'] = doc.id;
         });
+      } else {
+        return;
       }
     } catch (e) {
-      print("Error cargando mascota: $e");
+      return;
     }
   }
 
@@ -151,21 +168,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stack) {
-                          print(
-                            'Error al cargar imagen en Image.network: $error',
-                          );
-                          return Container(
-                            width: 200,
-                            height: 200,
-                            color: Colors.grey,
-                            child: const Icon(
-                              Icons.error,
-                              size: 60,
-                              color: Colors.red,
-                            ),
-                          );
-                        },
                       )
                       : Container(
                         width: 200,
@@ -223,7 +225,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconInfo(
-                      icon: Icons.fastfood,
+                      icon: Icons.local_dining,
                       label: 'Comida',
                       value: mascota['comida'] ?? 'No especificada',
                     ),
@@ -250,7 +252,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Indicador si ya envió formulario
           if (_yaEnvioFormulario)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -279,30 +280,29 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               text:
                                   'Ya has enviado una solicitud de adopción para esta mascota. Puedes revisar el estado en tu ',
                             ),
-                            WidgetSpan(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => const MainNavigationPage(
-                                            initialIndex: 3,
-                                          ),
-                                    ),
-                                    (route) => false,
-                                  );
-                                },
-                                child: Text(
-                                  'perfil',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.orange.shade700,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
+                            TextSpan(
+                              text: 'perfil',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
                               ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) =>
+                                                  const MainNavigationPage(
+                                                    initialIndex: 3,
+                                                  ),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    },
                             ),
                             const TextSpan(text: '.'),
                           ],
@@ -314,7 +314,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
             ),
 
-          // Botón de adoptar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(

@@ -1,9 +1,48 @@
 import 'package:flutter/material.dart';
+import '../services/form_notifier.dart';
+import '../services/firestore_service.dart';
 
 class MascotaProvider extends ChangeNotifier {
   final List<Map<String, dynamic>> _mascotasFavoritas = [];
   bool _isLoading = false;
   String _usuarioActual = 'Usuario Invitado';
+
+  MascotaProvider() {
+    FormNotifier().addListener(_onMascotaChange);
+  }
+
+  void _onMascotaChange() {
+    _validarFavoritos();
+    notifyListeners();
+  }
+
+  Future<void> _validarFavoritos() async {
+    final favoritosParaValidar = List<Map<String, dynamic>>.from(
+      _mascotasFavoritas,
+    );
+
+    for (final mascota in favoritosParaValidar) {
+      final mascotaId = mascota['id'];
+      if (mascotaId != null) {
+        try {
+          final mascotaExiste = await FirestoreService.obtenerMascotaPorId(
+            mascotaId,
+          );
+          if (mascotaExiste == null) {
+            _mascotasFavoritas.removeWhere((m) => m['id'] == mascotaId);
+          }
+        } catch (e) {
+          return;
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    FormNotifier().removeListener(_onMascotaChange);
+    super.dispose();
+  }
 
   List<Map<String, dynamic>> get mascotasFavoritas => _mascotasFavoritas;
   bool get isLoading => _isLoading;
@@ -22,6 +61,11 @@ class MascotaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removerDeFavoritosPorId(String mascotaId) {
+    _mascotasFavoritas.removeWhere((m) => m['id'] == mascotaId);
+    notifyListeners();
+  }
+
   bool _esFavorita(Map<String, dynamic> mascota) {
     return _mascotasFavoritas.any((m) => _sonLaMismaMascota(m, mascota));
   }
@@ -30,12 +74,10 @@ class MascotaProvider extends ChangeNotifier {
     Map<String, dynamic> mascota1,
     Map<String, dynamic> mascota2,
   ) {
-    // Comparar por id si ambas lo tienen
     if (mascota1['id'] != null && mascota2['id'] != null) {
       return mascota1['id'] == mascota2['id'];
     }
 
-    // Comparar por nombre si no tienen id
     final nombre1 = mascota1['nombre'] ?? mascota1['name'];
     final nombre2 = mascota2['nombre'] ?? mascota2['name'];
 
@@ -43,7 +85,6 @@ class MascotaProvider extends ChangeNotifier {
       return nombre1 == nombre2;
     }
 
-    // Fallback: comparar por referencia
     return mascota1 == mascota2;
   }
 
@@ -72,6 +113,11 @@ class MascotaProvider extends ChangeNotifier {
   void limpiarFavoritos() {
     _mascotasFavoritas.clear();
     _usuarioActual = 'Usuario Invitado';
+    notifyListeners();
+  }
+
+  Future<void> validarYLimpiarFavoritos() async {
+    await _validarFavoritos();
     notifyListeners();
   }
 

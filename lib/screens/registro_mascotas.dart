@@ -5,11 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../providers/mascota_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io' if (dart.library.html) 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:typed_data';
 
 class RegistroMascotaScreen extends StatefulWidget {
   const RegistroMascotaScreen({super.key});
@@ -30,7 +31,7 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
   String _especieSeleccionada = 'Perro';
   String _unidadEdadSeleccionada = 'años';
   String _comidaSeleccionada = 'Purina';
-  dynamic _imagenSeleccionada; // Cambia de File? a dynamic
+  dynamic _imagenSeleccionada;
   final ImagePicker _picker = ImagePicker();
 
   List<Map<String, String>> mascotas = [];
@@ -41,14 +42,12 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
           'mascotas/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       if (kIsWeb) {
-        // Para web
         TaskSnapshot snapshot = await FirebaseStorage.instance
             .ref()
             .child(nombreArchivo)
             .putData(imagen);
         return await snapshot.ref.getDownloadURL();
       } else {
-        // Para móvil
         TaskSnapshot snapshot = await FirebaseStorage.instance
             .ref()
             .child(nombreArchivo)
@@ -56,7 +55,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
         return await snapshot.ref.getDownloadURL();
       }
     } catch (e) {
-      print('Error al subir imagen: $e');
       return null;
     }
   }
@@ -87,15 +85,13 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
         SnackBar(
           content: Text('Error al seleccionar imagen: ${e.toString()}'),
           backgroundColor: Colors.red,
-              ),
-            
-          );
+        ),
+      );
     }
   }
 
   void _registrarMascota() async {
     if (_formKey.currentState!.validate()) {
-      // Validar que se haya seleccionado una imagen
       if (_imagenSeleccionada == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -106,7 +102,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
         return;
       }
 
-      // Mostrar indicador de carga
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -114,7 +109,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
       );
 
       try {
-        // 1. Primero subir la imagen a Firebase Storage
         String? imagenUrl = await _subirImagenAFirebase(_imagenSeleccionada!);
 
         if (imagenUrl == null) {
@@ -128,7 +122,18 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
           return;
         }
 
-        // 2. Crear el mapa de datos para Firestore con la URL de Firebase Storage
+        final user = AuthService.currentUser;
+        if (user == null) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Usuario no autenticado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
         final mascotaData = {
           'nombre': _nombreController.text.trim(),
           'especie': _especieSeleccionada,
@@ -136,32 +141,28 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
           'unidadEdad': _unidadEdadSeleccionada,
           'descripcion': _descripcionController.text.trim(),
           'comida': _comidaSeleccionada,
-          'fotoURL': imagenUrl, // Usamos la URL de Firebase Storage
+          'fotoURL': imagenUrl,
           'genero': _generoSeleccionado,
-          'fechaRegistro':
-              FieldValue.serverTimestamp(), // Fecha exacta del servidor
+          'usuarioId': user.uid,
+          'fechaRegistro': FieldValue.serverTimestamp(),
         };
 
-        // 3. Guardar en Firestore
         String? mascotaId = await FirestoreService.registrarMascota(
           mascotaData,
         );
 
-        // Cerrar el indicador de carga
         Navigator.of(context).pop();
 
         if (mascotaId != null) {
-          // Agregar a la lista local para mostrar
           setState(() {
             mascotas.add({
               'nombre': _nombreController.text,
               'especie': _especieSeleccionada,
               'edad': '${_edadController.text} $_unidadEdadSeleccionada',
               'descripcion': _descripcionController.text,
-              'imagenUrl': imagenUrl, // Agregamos la URL de la imagen
+              'imagenUrl': imagenUrl,
             });
 
-            // Limpiar los campos
             _nombreController.clear();
             _edadController.clear();
             _descripcionController.clear();
@@ -173,14 +174,13 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
             _formKey.currentState!.reset();
           });
 
-          // Opcionalmente agregar a favoritos usando Provider
           final provider = Provider.of<MascotaProvider>(context, listen: false);
           final nuevaMascota = {
-            'id': mascotaId, // Usamos el ID real de Firestore
+            'id': mascotaId,
             'name': mascotaData['nombre'],
             'type': mascotaData['especie'],
             'age': '${mascotaData['edad']} ${mascotaData['unidadEdad']}',
-            'image': imagenUrl, // Usamos la URL de Firebase Storage
+            'image': imagenUrl,
             'color': const Color(0xFFA8CD89),
           };
 
@@ -208,7 +208,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
             ),
           );
 
-          // Regresar true para indicar que se registró exitosamente
+          FormNotifier().notifyMascotaRegistrada();
+
           Navigator.of(context).pop(true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +222,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
           );
         }
       } catch (e) {
-        // Cerrar el indicador de carga si hay error
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -328,10 +328,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Fila con Especie y Género
                       Row(
                         children: [
-                          // Dropdown de Especie
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -369,7 +367,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          // Dropdown de Género
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -410,7 +407,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Fila con Edad y Unidad
                       Row(
                         children: [
                           Expanded(
@@ -478,7 +474,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Dropdown de Comida
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
@@ -539,94 +534,95 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Selector de foto
-GestureDetector(
-  onTap: _seleccionarImagen,
-  child: Container(
-    width: double.infinity,
-    height: _imagenSeleccionada != null ? 200 : 120,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: campoColor,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: _imagenSeleccionada == null 
-          ? Colors.red.shade300 
-          : Colors.grey.shade300,
-        width: _imagenSeleccionada == null ? 2 : 1,
-      ),
-    ),
-    child: _imagenSeleccionada != null
-      ? Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: kIsWeb
-                ? Image.memory(
-                    _imagenSeleccionada,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                : Image.file(
-                    _imagenSeleccionada,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _imagenSeleccionada = null;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black54,
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        )
-      : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_a_photo,
-              size: 48,
-              color: Colors.grey[600],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Toca para seleccionar una foto del dispositivo',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-  ),
-),
+                      GestureDetector(
+                        onTap: _seleccionarImagen,
+                        child: Container(
+                          width: double.infinity,
+                          height: _imagenSeleccionada != null ? 200 : 120,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: campoColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color:
+                                  _imagenSeleccionada == null
+                                      ? Colors.red.shade300
+                                      : Colors.grey.shade300,
+                              width: _imagenSeleccionada == null ? 2 : 1,
+                            ),
+                          ),
+                          child:
+                              _imagenSeleccionada != null
+                                  ? Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child:
+                                            kIsWeb
+                                                ? Image.memory(
+                                                  _imagenSeleccionada,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                )
+                                                : Image.file(
+                                                  _imagenSeleccionada,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                      ),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _imagenSeleccionada = null;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.black54,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_a_photo,
+                                        size: 48,
+                                        color: Colors.grey[600],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Toca para seleccionar una foto del dispositivo',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              // Aquí puedes agregar un botón para registrar la mascota
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(

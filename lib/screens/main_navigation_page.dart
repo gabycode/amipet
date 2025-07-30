@@ -29,7 +29,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       InicioPage(
         onNavigateToExplorer: () {
           setState(() {
-            _currentIndex = 1; // Cambiar a la pestaña de Explorar
+            _currentIndex = 1;
           });
         },
       ),

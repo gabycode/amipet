@@ -16,7 +16,6 @@ class InicioPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Prevenir navegación hacia atrás que cause problemas de sesión
         return false;
       },
       child: Scaffold(
@@ -45,7 +44,6 @@ class InicioPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Banner
                 Container(
                   decoration: BoxDecoration(
                     color: amarillo,
@@ -105,7 +103,6 @@ class InicioPage extends StatelessWidget {
 
                 const SizedBox(height: 32),
 
-                // Categorías
                 Text(
                   'Categorías',
                   style: GoogleFonts.poppins(
@@ -124,7 +121,6 @@ class InicioPage extends StatelessWidget {
 
                 const SizedBox(height: 32),
 
-                // Consejos
                 Text(
                   'Consejos para adoptar',
                   style: GoogleFonts.poppins(
@@ -143,7 +139,6 @@ class InicioPage extends StatelessWidget {
 
                 const SizedBox(height: 32),
 
-                // Botón de explorar
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -160,7 +155,6 @@ class InicioPage extends StatelessWidget {
                       if (onNavigateToExplorer != null) {
                         onNavigateToExplorer!();
                       } else {
-                        // Fallback si no hay callback
                         Navigator.push(
                           context,
                           MaterialPageRoute(
