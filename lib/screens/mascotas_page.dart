@@ -1,5 +1,4 @@
 // explorar_mascotas_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -36,11 +35,57 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
     {'nombre': 'Gatos', 'icono': Icons.pets, 'especie': 'Gato'},
   ];
 
+  final ScrollController _scrollController = ScrollController();
+  int _limiteMascotas = 20;
+
   @override
   void initState() {
     super.initState();
     _obtenerNombreUsuario();
     cargarMascotas();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> cargarMascotas({bool cargarMas = false}) async {
+    setState(() {
+      loading = true;
+      error = '';
+    });
+
+    try {
+      final todasMascotas = await FirestoreService.obtenerMascotasDestacadas(
+        limite: _limiteMascotas,
+      );
+      setState(() {
+        todasLasMascotas = todasMascotas;
+        mascotas = todasMascotas;
+        loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        error = 'Error al cargar mascotas: $e';
+        loading = false;
+      });
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Cuando esté cerca del final, carga más
+      if (!loading && mascotas.length >= _limiteMascotas) {
+        setState(() {
+          _limiteMascotas += 20; // Carga 20 más
+        });
+        cargarMascotas(cargarMas: true);
+      }
+    }
   }
 
   void _obtenerNombreUsuario() {
@@ -50,7 +95,7 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
     });
   }
 
-  Future<void> cargarMascotas() async {
+  Future<void> cargarTodasLasMascotas() async {
     setState(() {
       loading = true;
       error = '';
@@ -93,434 +138,387 @@ class _ExplorarMascotasPageState extends State<ExplorarMascotasPage> {
     final ancho = MediaQuery.of(context).size.width;
 
     return WillPopScope(
-      onWillPop: () async {
-        // Prevenir navegación hacia atrás que cause problemas de sesión
-        // En su lugar, mantener al usuario en la aplicación
-        return false;
-      },
+      onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 253, 238, 238),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         body: SafeArea(
           child:
               loading
                   ? const Center(child: CircularProgressIndicator())
                   : error.isNotEmpty
                   ? Center(child: Text(error))
-                  : SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '¡Hola $userName!',
-                          style: GoogleFonts.poppins(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
+                  : ListView(
+                    controller: _scrollController,
+                    padding: EdgeInsets.zero,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Bienvenid@ de vuelta',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            color: Colors.grey[700],
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Explorar por categoría',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: grisTexto,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 80,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categorias.length,
-                            itemBuilder: (context, index) {
-                              final categoria = categorias[index];
-                              final selected = index == selectedTab;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 16),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedTab = index;
-                                    });
-                                    filtrarPorCategoria(categoria['especie']);
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              selected
-                                                  ? verdeOscuro
-                                                  : verdeClaro,
-                                          shape: BoxShape.circle,
-                                          boxShadow:
-                                              selected
-                                                  ? [
-                                                    BoxShadow(
-                                                      color: verdeOscuro
-                                                          .withOpacity(0.3),
-                                                      blurRadius: 8,
-                                                      offset: const Offset(
-                                                        0,
-                                                        2,
-                                                      ),
-                                                    ),
-                                                  ]
-                                                  : null,
-                                        ),
-                                        child: Icon(
-                                          categoria['icono'],
-                                          size: 24,
-                                          color:
-                                              selected
-                                                  ? Colors.white
-                                                  : verdeOscuro,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        categoria['nombre'],
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          fontWeight:
-                                              selected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                          color:
-                                              selected
-                                                  ? verdeOscuro
-                                                  : grisTexto,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Mascotas disponibles',
+                              '¡Hola $userName!',
                               style: GoogleFonts.poppins(
-                                fontSize: 20,
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            IconButton(
-                              onPressed: cargarMascotas,
-                              icon: const Icon(Icons.refresh),
-                              tooltip: 'Actualizar lista',
+                            const SizedBox(height: 4),
+                            Text(
+                              'Bienvenid@ de vuelta',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                color: Colors.grey[700],
+                                letterSpacing: 1.1,
+                              ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 250, // Aumentamos la altura
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: mascotas.length,
-                            itemBuilder: (context, index) {
-                              final mascota = mascotas[index];
-                              final foto = mascota['fotoURL'];
-                              final nombre = mascota['nombre'] ?? 'Sin nombre';
-                              final edad = mascota['edad'];
-                              final raza =
-                                  mascota['especie'] ?? 'Sin especificar';
-
-                              // Formatear la edad
-                              String edadTexto = '';
-                              if (edad != null) {
-                                final unidadEdad =
-                                    mascota['unidadEdad'] ?? 'años';
-                                edadTexto = '$edad $unidadEdad';
-                              }
-
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              PetDetailScreen(mascota: mascota),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Explorar por categoría',
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: grisTexto,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 60,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: categorias.length,
+                                itemBuilder: (context, index) {
+                                  final categoria = categorias[index];
+                                  final selected = selectedTab == index;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedTab = index;
+                                      });
+                                      filtrarPorCategoria(categoria['especie']);
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(right: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            selected
+                                                ? verdeClaro
+                                                : Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(
+                                              0.15,
+                                            ),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            categoria['icono'],
+                                            color: verdeOscuro,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            categoria['nombre'],
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: grisTexto,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
                                 },
-                                child: Container(
-                                  width: ancho * 0.65,
-                                  margin: const EdgeInsets.only(right: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.15),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Mascotas disponibles',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                ),
+                                IconButton(
+                                  onPressed: cargarTodasLasMascotas,
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: 'Actualizar lista',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      ...mascotas.map((mascota) {
+                        final foto = mascota['fotoURL'];
+                        final nombre = mascota['nombre'] ?? 'Sin nombre';
+                        final edad = mascota['edad'];
+                        final raza = mascota['especie'] ?? 'Sin especificar';
+
+                        String edadTexto = '';
+                        if (edad != null) {
+                          final unidadEdad = mascota['unidadEdad'] ?? 'años';
+                          edadTexto = '$edad $unidadEdad';
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          PetDetailScreen(mascota: mascota),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Stack(
                                     children: [
-                                      Stack(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                  top: Radius.circular(16),
-                                                ),
-                                            child: SizedBox(
-                                              height: 140,
-                                              width: double.infinity,
-                                              child:
-                                                  foto != null
-                                                      ? Image.network(
-                                                        foto,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) {
-                                                          return Container(
-                                                            color:
-                                                                Colors
-                                                                    .grey[200],
-                                                            child: const Icon(
-                                                              Icons.pets,
-                                                              size: 60,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                          );
-                                                        },
-                                                        loadingBuilder: (
-                                                          context,
-                                                          child,
-                                                          loadingProgress,
-                                                        ) {
-                                                          if (loadingProgress ==
-                                                              null)
-                                                            return child;
-                                                          return Container(
-                                                            color:
-                                                                Colors
-                                                                    .grey[200],
-                                                            child: const Center(
-                                                              child:
-                                                                  CircularProgressIndicator(),
-                                                            ),
-                                                          );
-                                                        },
-                                                      )
-                                                      : Container(
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(16),
+                                            ),
+                                        child: SizedBox(
+                                          height: 140,
+                                          width: double.infinity,
+                                          child:
+                                              foto != null
+                                                  ? Image.network(
+                                                    foto,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Container(
                                                         color: Colors.grey[200],
                                                         child: const Icon(
                                                           Icons.pets,
                                                           size: 60,
                                                           color: Colors.grey,
                                                         ),
-                                                      ),
-                                            ),
-                                          ),
-                                          // Botón de favorito
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Consumer<MascotaProvider>(
-                                              builder: (
-                                                context,
-                                                provider,
-                                                child,
-                                              ) {
-                                                final isFavorita = provider
-                                                    .isFavorita(mascota);
-                                                return GestureDetector(
-                                                  onTap: () {
-                                                    provider.toggleFavorito(
-                                                      mascota,
-                                                    );
-                                                    ScaffoldMessenger.of(
+                                                      );
+                                                    },
+                                                    loadingBuilder: (
                                                       context,
-                                                    ).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                          isFavorita
-                                                              ? '${nombre} removido de favoritos'
-                                                              : '${nombre} agregado a favoritos',
+                                                      child,
+                                                      loadingProgress,
+                                                    ) {
+                                                      if (loadingProgress ==
+                                                          null)
+                                                        return child;
+                                                      return Container(
+                                                        color: Colors.grey[200],
+                                                        child: const Center(
+                                                          child:
+                                                              CircularProgressIndicator(),
                                                         ),
-                                                        duration:
-                                                            const Duration(
-                                                              seconds: 1,
-                                                            ),
-                                                        backgroundColor:
-                                                            isFavorita
-                                                                ? Colors.red
-                                                                : Colors.green,
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withOpacity(0.9),
-                                                      shape: BoxShape.circle,
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.grey
-                                                              .withOpacity(0.3),
-                                                          blurRadius: 4,
-                                                          offset: const Offset(
-                                                            0,
-                                                            2,
-                                                          ),
-                                                        ),
-                                                      ],
+                                                      );
+                                                    },
+                                                  )
+                                                  : Container(
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(
+                                                      Icons.pets,
+                                                      size: 60,
+                                                      color: Colors.grey,
                                                     ),
-                                                    child: Icon(
+                                                  ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: Consumer<MascotaProvider>(
+                                          builder: (context, provider, child) {
+                                            final isFavorita = provider
+                                                .isFavorita(mascota);
+                                            return GestureDetector(
+                                              onTap: () {
+                                                provider.toggleFavorito(
+                                                  mascota,
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
                                                       isFavorita
-                                                          ? Icons.favorite
-                                                          : Icons
-                                                              .favorite_border,
-                                                      color:
-                                                          isFavorita
-                                                              ? Colors.red
-                                                              : Colors.grey,
-                                                      size: 20,
+                                                          ? '$nombre removido de favoritos'
+                                                          : '$nombre agregado a favoritos',
                                                     ),
+                                                    duration: const Duration(
+                                                      seconds: 1,
+                                                    ),
+                                                    backgroundColor:
+                                                        isFavorita
+                                                            ? Colors.red
+                                                            : Colors.green,
                                                   ),
                                                 );
                                               },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              nombre,
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              edadTexto,
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: verdeClaro,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                raza,
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 4,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Icon(
+                                                  isFavorita
+                                                      ? Icons.favorite
+                                                      : Icons.favorite_border,
+                                                  color:
+                                                      isFavorita
+                                                          ? Colors.red
+                                                          : Colors.grey,
+                                                  size: 20,
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],
                                   ),
-                                ), // Cierra el Container
-                              ); // Cierra el GestureDetector
-                            }, // Cierra el itemBuilder
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    // Navegar y esperar a que regrese
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) =>
-                                                const RegistroMascotaScreen(),
-                                      ),
-                                    );
-
-                                    // Si se registró una mascota, recargar la lista
-                                    if (result == true) {
-                                      cargarMascotas();
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF355F2E),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 15,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Registrar Mascotas',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                  Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          nombre,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          edadTexto,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: verdeClaro,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            raza,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ),
+                        );
+                      }).toList(),
+                      const SizedBox(height: 10),
+                    ],
                   ),
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RegistroMascotaScreen(),
+                  ),
+                );
+                if (result == true) {
+                  cargarTodasLasMascotas();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF355F2E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+              child: const Text(
+                'Registrar Mascotas',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

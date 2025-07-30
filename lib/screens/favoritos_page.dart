@@ -14,7 +14,7 @@ class FavoritosPage extends StatelessWidget {
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4FFE8),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         body: SafeArea(
           child: Consumer<MascotaProvider>(
             builder: (context, provider, child) {
