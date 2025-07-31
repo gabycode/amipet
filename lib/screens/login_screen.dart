@@ -127,7 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 20),
 
-                // Título
                 Text(
                   "¡Bienvenido de vuelta!",
                   style: GoogleFonts.poppins(
@@ -151,7 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                // Formulario
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -168,14 +166,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Campo de correo
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         inputFormatters: [
-                          FilteringTextInputFormatter.deny(
-                            RegExp(r'\s'),
-                          ), // Bloquear espacios
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
                         ],
                         decoration: InputDecoration(
                           labelText: 'Correo electrónico',
@@ -206,7 +201,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Campo de contraseña
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -246,12 +240,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Enlace de recuperar contraseña
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Implementar recuperación de contraseña
                             _showForgotPasswordDialog();
                           },
                           child: Text(
@@ -266,7 +258,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Botón de iniciar sesión
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -337,7 +328,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                // Enlace para crear cuenta
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -406,9 +396,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 inputFormatters: [
-                  FilteringTextInputFormatter.deny(
-                    RegExp(r'\s'),
-                  ), // Bloquear espacios
+                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
                 ],
                 decoration: InputDecoration(
                   labelText: 'Correo electrónico',

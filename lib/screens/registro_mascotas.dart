@@ -5,6 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../providers/mascota_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io' if (dart.library.html) 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class RegistroMascotaScreen extends StatefulWidget {
   const RegistroMascotaScreen({super.key});
@@ -25,76 +31,59 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
   String _especieSeleccionada = 'Perro';
   String _unidadEdadSeleccionada = 'años';
   String _comidaSeleccionada = 'Purina';
-  File? _imagenSeleccionada;
+  dynamic _imagenSeleccionada;
   final ImagePicker _picker = ImagePicker();
 
   List<Map<String, String>> mascotas = [];
 
+  Future<String?> _subirImagenAFirebase(dynamic imagen) async {
+    try {
+      String nombreArchivo =
+          'mascotas/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      if (kIsWeb) {
+        TaskSnapshot snapshot = await FirebaseStorage.instance
+            .ref()
+            .child(nombreArchivo)
+            .putData(imagen);
+        return await snapshot.ref.getDownloadURL();
+      } else {
+        TaskSnapshot snapshot = await FirebaseStorage.instance
+            .ref()
+            .child(nombreArchivo)
+            .putFile(imagen);
+        return await snapshot.ref.getDownloadURL();
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> _seleccionarImagen() async {
     try {
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text('Tomar foto'),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final XFile? imagen = await _picker.pickImage(
-                      source: ImageSource.camera,
-                      maxWidth: 800,
-                      maxHeight: 600,
-                      imageQuality: 80,
-                    );
-                    if (imagen != null) {
-                      setState(() {
-                        _imagenSeleccionada = File(imagen.path);
-                      });
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Seleccionar de galería'),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final XFile? imagen = await _picker.pickImage(
-                      source: ImageSource.gallery,
-                      maxWidth: 800,
-                      maxHeight: 600,
-                      imageQuality: 80,
-                    );
-                    if (imagen != null) {
-                      setState(() {
-                        _imagenSeleccionada = File(imagen.path);
-                      });
-                    }
-                  },
-                ),
-                if (_imagenSeleccionada != null)
-                  ListTile(
-                    leading: const Icon(Icons.delete),
-                    title: const Text('Quitar imagen'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      setState(() {
-                        _imagenSeleccionada = null;
-                      });
-                    },
-                  ),
-              ],
-            ),
-          );
-        },
+      final XFile? imagenSeleccionada = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 600,
+        imageQuality: 80,
       );
+
+      if (imagenSeleccionada != null) {
+        if (kIsWeb) {
+          final bytes = await imagenSeleccionada.readAsBytes();
+          setState(() {
+            _imagenSeleccionada = bytes;
+          });
+        } else {
+          setState(() {
+            _imagenSeleccionada = File(imagenSeleccionada.path);
+          });
+        }
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al seleccionar imagen: $e'),
+          content: Text('Error al seleccionar imagen: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -103,7 +92,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
 
   void _registrarMascota() async {
     if (_formKey.currentState!.validate()) {
-      // Validar que se haya seleccionado una imagen
       if (_imagenSeleccionada == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -114,7 +102,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
         return;
       }
 
-      // Mostrar indicador de carga
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -122,42 +109,63 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
       );
 
       try {
-        // Crear el mapa de datos para Firestore
+        String? imagenUrl = await _subirImagenAFirebase(_imagenSeleccionada!);
+
+        if (imagenUrl == null) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al subir la imagen. Intenta de nuevo.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final user = AuthService.currentUser;
+        if (user == null) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Usuario no autenticado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
         final mascotaData = {
           'nombre': _nombreController.text.trim(),
           'especie': _especieSeleccionada,
-          'edad': int.parse(_edadController.text.trim()), // Como número
-          'unidadEdad': _unidadEdadSeleccionada, // Añadir unidad de edad
+          'edad': int.parse(_edadController.text.trim()),
+          'unidadEdad': _unidadEdadSeleccionada,
           'descripcion': _descripcionController.text.trim(),
           'comida': _comidaSeleccionada,
-          'fotoURL':
-              _fotoURLController.text.trim().isEmpty
-                  ? 'https://via.placeholder.com/300x200/A8CD89/FFFFFF?text=Sin+Foto'
-                  : _fotoURLController.text.trim(),
+          'fotoURL': imagenUrl,
           'genero': _generoSeleccionado,
+          'usuarioId': user.uid,
+          'fechaRegistro': FieldValue.serverTimestamp(),
         };
 
-        // Guardar en Firestore
         String? mascotaId = await FirestoreService.registrarMascota(
           mascotaData,
         );
 
-        // Cerrar el indicador de carga
         Navigator.of(context).pop();
 
         if (mascotaId != null) {
-          // Agregar a la lista local para mostrar
           setState(() {
             mascotas.add({
               'nombre': _nombreController.text,
               'especie': _especieSeleccionada,
               'edad': '${_edadController.text} $_unidadEdadSeleccionada',
               'descripcion': _descripcionController.text,
+              'imagenUrl': imagenUrl,
             });
+
             _nombreController.clear();
             _edadController.clear();
             _descripcionController.clear();
-            _fotoURLController.clear();
             _especieSeleccionada = 'Perro';
             _generoSeleccionado = 'macho';
             _unidadEdadSeleccionada = 'años';
@@ -166,14 +174,13 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
             _formKey.currentState!.reset();
           });
 
-          // Opcionalmente agregar a favoritos usando Provider
           final provider = Provider.of<MascotaProvider>(context, listen: false);
           final nuevaMascota = {
-            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'id': mascotaId,
             'name': mascotaData['nombre'],
             'type': mascotaData['especie'],
-            'age': '${mascotaData['edad']} años',
-            'image': 'assets/pet_banner.jpg',
+            'age': '${mascotaData['edad']} ${mascotaData['unidadEdad']}',
+            'image': imagenUrl,
             'color': const Color(0xFFA8CD89),
           };
 
@@ -201,7 +208,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
             ),
           );
 
-          // Regresar true para indicar que se registró exitosamente
+          FormNotifier().notifyMascotaRegistrada();
+
           Navigator.of(context).pop(true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -214,10 +222,12 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
           );
         }
       } catch (e) {
-        // Cerrar el indicador de carga si hay error
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('❌ Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -318,10 +328,8 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Fila con Especie y Género
                       Row(
                         children: [
-                          // Dropdown de Especie
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -359,7 +367,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          // Dropdown de Género
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -400,7 +407,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Fila con Edad y Unidad
                       Row(
                         children: [
                           Expanded(
@@ -468,7 +474,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Dropdown de Comida
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
@@ -529,7 +534,6 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Selector de foto
                       GestureDetector(
                         onTap: _seleccionarImagen,
                         child: Container(
@@ -553,12 +557,20 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(
-                                          _imagenSeleccionada!,
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                          fit: BoxFit.cover,
-                                        ),
+                                        child:
+                                            kIsWeb
+                                                ? Image.memory(
+                                                  _imagenSeleccionada,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                )
+                                                : Image.file(
+                                                  _imagenSeleccionada,
+                                                  width: double.infinity,
+                                                  height: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                ),
                                       ),
                                       Positioned(
                                         top: 8,
@@ -571,8 +583,9 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
+                                            decoration: const BoxDecoration(
                                               shape: BoxShape.circle,
+                                              color: Colors.black54,
                                             ),
                                             child: const Icon(
                                               Icons.close,
@@ -605,54 +618,34 @@ class _RegistroMascotaScreenState extends State<RegistroMascotaScreen> {
                                   ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: botonVerde,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: _registrarMascota,
-                          child: const Text(
-                            'Agregar mascota',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-              if (mascotas.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Mascotas registradas:',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: botonVerde,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 10),
-                    ...mascotas.map(
-                      (mascota) => Card(
-                        child: ListTile(
-                          title: Text(mascota['nombre'] ?? ''),
-                          subtitle: Text(
-                            '${mascota['especie']} • ${mascota['edad']} años',
-                          ),
-                        ),
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
                     ),
-                  ],
+                  ),
+                  onPressed: _registrarMascota,
+                  child: const Text(
+                    'Registrar Mascota',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
+              ),
             ],
           ),
         ),

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'adopt_pet_screen.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/form_notifier.dart';
 import '../providers/mascota_provider.dart';
 import 'main_navigation_page.dart';
 
 class PetDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> mascota;
+  final String mascotaId;
 
-  const PetDetailScreen({super.key, required this.mascota});
+  const PetDetailScreen({super.key, required this.mascotaId});
 
   @override
   State<PetDetailScreen> createState() => _PetDetailScreenState();
@@ -18,20 +21,55 @@ class PetDetailScreen extends StatefulWidget {
 class _PetDetailScreenState extends State<PetDetailScreen> {
   bool _yaEnvioFormulario = false;
   bool _verificandoFormulario = true;
+  Map<String, dynamic> mascota = {};
 
   @override
   void initState() {
     super.initState();
+    _cargarDatosMascota();
     _verificarFormularioExistente();
+
+    FormNotifier().addListener(_onFormChanged);
+  }
+
+  @override
+  void dispose() {
+    FormNotifier().removeListener(_onFormChanged);
+    super.dispose();
+  }
+
+  void _onFormChanged() {
+    _verificarFormularioExistente();
+  }
+
+  Future<void> _cargarDatosMascota() async {
+    try {
+      DocumentSnapshot doc =
+          await FirebaseFirestore.instance
+              .collection('mascotas')
+              .doc(widget.mascotaId)
+              .get();
+
+      if (doc.exists) {
+        setState(() {
+          mascota = doc.data() as Map<String, dynamic>;
+          mascota['id'] = doc.id;
+        });
+      } else {
+        return;
+      }
+    } catch (e) {
+      return;
+    }
   }
 
   void _verificarFormularioExistente() async {
     final user = AuthService.currentUser;
-    if (user != null && widget.mascota['id'] != null) {
+    if (user != null) {
       try {
         final yaEnvio = await FirestoreService.usuarioYaEnvioFormulario(
           user.uid,
-          widget.mascota['id'],
+          widget.mascotaId,
         );
         setState(() {
           _yaEnvioFormulario = yaEnvio;
@@ -78,16 +116,16 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
               Consumer<MascotaProvider>(
                 builder: (context, provider, child) {
-                  final isFavorita = provider.isFavorita(widget.mascota);
+                  final isFavorita = provider.isFavorita(mascota);
                   return GestureDetector(
                     onTap: () {
-                      provider.toggleFavorito(widget.mascota);
+                      provider.toggleFavorito(mascota);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
                             isFavorita
-                                ? '${widget.mascota['nombre'] ?? 'Mascota'} removido de favoritos'
-                                : '${widget.mascota['nombre'] ?? 'Mascota'} agregado a favoritos',
+                                ? '${mascota['nombre'] ?? 'Mascota'} removido de favoritos'
+                                : '${mascota['nombre'] ?? 'Mascota'} agregado a favoritos',
                           ),
                           duration: const Duration(seconds: 1),
                           backgroundColor:
@@ -120,27 +158,34 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
           Center(
-            child: CircleAvatar(
-              radius: 100,
-              backgroundColor: Colors.grey[200],
-              backgroundImage:
-                  widget.mascota['fotoURL'] != null &&
-                          widget.mascota['fotoURL'].toString().isNotEmpty
-                      ? NetworkImage(widget.mascota['fotoURL'])
-                      : null,
+            child: ClipOval(
               child:
-                  widget.mascota['fotoURL'] == null ||
-                          widget.mascota['fotoURL'].toString().isEmpty
-                      ? const Icon(Icons.pets, size: 60, color: Colors.grey)
-                      : null,
+                  mascota['fotoURL'] != null &&
+                          mascota['fotoURL'].toString().isNotEmpty
+                      ? Image.network(
+                        mascota['fotoURL'],
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(
+                        width: 200,
+                        height: 200,
+                        color: Colors.grey,
+                        child: const Icon(
+                          Icons.pets,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      ),
             ),
           ),
+
           const SizedBox(height: 16),
           Center(
             child: Text(
-              widget.mascota['nombre'] ?? 'Sin nombre',
+              mascota['nombre'] ?? 'Sin nombre',
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -159,7 +204,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.mascota['especie'] ?? 'Especie no especificada',
+                  mascota['especie'] ?? 'Especie no especificada',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -168,8 +213,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  widget.mascota['descripcion'] ??
-                      'Sin descripción disponible.',
+                  mascota['descripcion'] ?? 'Sin descripción disponible.',
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF6F4C45),
@@ -181,24 +225,24 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconInfo(
-                      icon: Icons.fastfood,
+                      icon: Icons.local_dining,
                       label: 'Comida',
-                      value: widget.mascota['comida'] ?? 'No especificada',
+                      value: mascota['comida'] ?? 'No especificada',
                     ),
                     IconInfo(
                       icon:
-                          widget.mascota['genero'] == 'macho'
+                          mascota['genero'] == 'macho'
                               ? Icons.male
                               : Icons.female,
                       label: 'Género',
-                      value: widget.mascota['genero'] ?? 'No especificado',
+                      value: mascota['genero'] ?? 'No especificado',
                     ),
                     IconInfo(
                       icon: Icons.calendar_today,
                       label: 'Edad',
                       value:
-                          widget.mascota['edad'] != null
-                              ? '${widget.mascota['edad']} ${widget.mascota['unidadEdad'] ?? 'años'}'
+                          mascota['edad'] != null
+                              ? '${mascota['edad']} ${mascota['unidadEdad'] ?? 'años'}'
                               : 'No especificada',
                     ),
                   ],
@@ -208,7 +252,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Indicador si ya envió formulario
           if (_yaEnvioFormulario)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -237,30 +280,29 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               text:
                                   'Ya has enviado una solicitud de adopción para esta mascota. Puedes revisar el estado en tu ',
                             ),
-                            WidgetSpan(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => const MainNavigationPage(
-                                            initialIndex: 3,
-                                          ),
-                                    ),
-                                    (route) => false,
-                                  );
-                                },
-                                child: Text(
-                                  'perfil',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.orange.shade700,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
+                            TextSpan(
+                              text: 'perfil',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
                               ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) =>
+                                                  const MainNavigationPage(
+                                                    initialIndex: 3,
+                                                  ),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    },
                             ),
                             const TextSpan(text: '.'),
                           ],
@@ -272,7 +314,6 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
             ),
 
-          // Botón de adoptar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
@@ -289,9 +330,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder:
-                                          (context) => AdoptPetScreen(
-                                            mascota: widget.mascota,
-                                          ),
+                                          (context) =>
+                                              AdoptPetScreen(mascota: mascota),
                                     ),
                                   );
                                 },

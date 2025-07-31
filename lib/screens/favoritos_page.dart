@@ -3,8 +3,23 @@ import 'package:provider/provider.dart';
 import '../providers/mascota_provider.dart';
 import 'pet_detail_screen.dart';
 
-class FavoritosPage extends StatelessWidget {
+class FavoritosPage extends StatefulWidget {
   const FavoritosPage({super.key});
+
+  @override
+  State<FavoritosPage> createState() => _FavoritosPageState();
+}
+
+class _FavoritosPageState extends State<FavoritosPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Validar favoritos cuando se carga la pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<MascotaProvider>(context, listen: false);
+      provider.validarYLimpiarFavoritos();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +29,7 @@ class FavoritosPage extends StatelessWidget {
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4FFE8),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         body: SafeArea(
           child: Consumer<MascotaProvider>(
             builder: (context, provider, child) {
@@ -97,8 +112,9 @@ class FavoritosPage extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (context) =>
-                                            PetDetailScreen(mascota: mascota),
+                                        (context) => PetDetailScreen(
+                                          mascotaId: mascota['id'],
+                                        ),
                                   ),
                                 );
                               },
